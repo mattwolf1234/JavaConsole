@@ -1,0 +1,153 @@
+package guiConsole;
+
+import java.awt.Color;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.DocumentFilter;
+
+public class Console {// Truly I almost never use anything but scan and insertLine/insert
+	/**
+	 * Known problems are:
+	 * 1. Some times a new portion of text is set to black, the user can highlight that text to make it go to white again
+	 * 2. Not everything is thread safe, so beware of the bugs!
+	 */
+	static JTextArea console = new JTextArea("",5,20);
+	static boolean entered = false;
+	static JScrollPane scroll = new JScrollPane(console);
+	protected JFrame window;
+	public Console(){
+		Document textDoc = console.getDocument(); //The Documents control what is allowed to type
+		DocumentFilter filter = new Filter();
+		((AbstractDocument) textDoc).setDocumentFilter(filter);
+		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		console.setLineWrap(true);
+		console.setBackground(Color.black);
+		console.setCaretColor(Color.white);
+		console.setSelectionColor(Color.DARK_GRAY);
+		console.setForeground(Color.white);
+	}
+	public synchronized JScrollPane getConsole(){//Used only when other items on the screen, remember this is just a modified JScrollPane
+		return scroll;
+	}
+	
+	public synchronized void setTitle(String title){
+		window.setTitle(title);
+	}
+	
+	public synchronized void setBlackTheme(boolean var){// Sets the black background theme or the white background theme
+		if (var == true){
+			console.setBackground(Color.black);
+			console.setCaretColor(Color.white);
+			console.setSelectionColor(Color.DARK_GRAY);
+			console.setForeground(Color.white);
+		}else{
+			console.setBackground(Color.white);
+			console.setCaretColor(Color.black);
+			console.setSelectionColor(Color.DARK_GRAY);
+			console.setForeground(Color.black);
+		}
+	}
+	public synchronized void insert(Object text){
+		try{// try block is for if a null is passed in
+			console.append(text.toString());
+			CheckValid.addSoild(text.toString().length()); // This makes sure you cannot type in this space
+		}catch(NullPointerException e){
+			e.printStackTrace();
+		}
+	}
+	public synchronized void insertLine(Object text){
+		try{
+			console.append(text.toString() + "\n");
+			CheckValid.addSoild(text.toString().length() + 1);// You have  to add the 1 because of the newLine
+		}catch(NullPointerException e){
+			e.printStackTrace();
+		}
+	}
+	public synchronized void deleteLine(int line){// Not tested very much, so possible errors
+		CheckValid.delete = true;// Have to block deletion block for a moment
+		try {
+			console.replaceRange("", console.getLineStartOffset(line), console.getLineEndOffset(line));
+			CheckValid.solid = (console.getText()).length();
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+		CheckValid.delete = false;
+	}
+	public synchronized String getLine(int line){ 
+		try {
+			return console.getText(console.getLineStartOffset(line), (console.getLineEndOffset(line) - console.getLineStartOffset(line)));
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	public synchronized String scan(){// Returns the user input
+		console.setCaretPosition(CheckValid.solid);
+		CheckValid.scanning = true;
+		try{
+			while (true){
+				Thread.sleep(1); // The loop needs something to do so I just run this line for nothing
+				if (entered){
+					break;
+				}
+		}
+		}catch (InterruptedException e){
+		}
+		entered = false;
+		CheckValid.scanning = false;
+		try {
+			return solidScan(console.getText(CheckValid.solid, (console.getCaretPosition() - CheckValid.solid))); 
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+	protected static void setEntered(boolean v){
+		entered = v;
+	}
+	protected static String solidScan(String returning){ // Turns newly entered text in to a solid(not deleteable)
+		CheckValid.addSoild(returning.length() + 1); // This assumes you have a new Line
+		console.append("\n");
+		return returning;
+	}
+	public synchronized void clear(){// This clears all of the text on screen
+		CheckValid.delete = true; // Have to overide the delete block for a moment
+		console.replaceRange("", 0,console.getText().length());
+		CheckValid.solid = 0;
+		CheckValid.delete = false;
+	}
+	public void createWindow(String title, int x, int y){// X is the width, y is height
+		window = new JFrame(title);
+		Point center = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
+		window.setBounds(center.x-x/2,center.y-y/2,x,y);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.add(scroll);
+		window.setVisible(true);
+	}
+	public void createWindow(String title, int x, int y, String iconFile){
+		createWindow(title,x,y);
+		setIcon(iconFile);
+	}
+	
+	public synchronized void destoryWindow(){
+		window.dispose();
+	}
+	
+	public void setIcon(String iconFile){
+		window.setIconImage(Toolkit.getDefaultToolkit().getImage(iconFile));
+	}
+	public void setIcon(Image image){
+		window.setIconImage(image);
+	}
+}
