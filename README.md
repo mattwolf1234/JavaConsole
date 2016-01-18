@@ -6,6 +6,6 @@ To use the Console object:
 
 Console example = new Console();
 
-example.createWindow("Name of console:,800,600);
+example.createWindow("Name of console",800,600);
 
 example.insertLine("Some text");
