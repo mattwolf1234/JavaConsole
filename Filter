@@ -1,0 +1,35 @@
+package guiConsole;
+
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+
+class Filter extends DocumentFilter {
+  public void insertString(DocumentFilter.FilterBypass fb, int offset, String string,
+      AttributeSet attr) throws BadLocationException {// This is never used I think?
+    super.insertString(fb, offset, string, attr);
+  }
+  public void remove(DocumentFilter.FilterBypass fb, int offset, int length)
+      throws BadLocationException {
+
+    if (CheckValid.isDeleteable(offset)){// Checks to see if allowed to delete some characters
+    	super.remove(fb, offset, length);
+    }
+  }
+
+  public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text,
+      AttributeSet attrs) throws BadLocationException {
+	  if (Console.console.getCaretPosition() <= CheckValid.solid){// Resets the caret position if in the wrong spot, if not scan is going on,
+		  //it will just go to the end
+		  Console.console.setCaretPosition(Console.console.getText().length());
+	  }
+    if (CheckValid.isReplaceable(offset)){// Checks to see if allowed to replace(or replace nothing)
+    	if (text.equals("\n")){
+    		Console.setEntered(true); //This is for the scan method so it knows the user has pressed enter and to stop the while loop
+    	}else{
+    		super.replace(fb, offset, length, text, attrs);
+    	}
+    }
+    
+  }
+}
