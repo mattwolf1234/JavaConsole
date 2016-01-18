@@ -1,0 +1,22 @@
+package guiConsole;
+
+class CheckValid {//You can figure this out, it's just numbers!
+	static boolean scanning = false;
+	static boolean delete = false;
+	static int solid = 0;
+	public static boolean isDeleteable(int offset){
+		if (solid > offset){
+			return false;
+		}
+		return true;
+	}
+	public static boolean isReplaceable(int offset){
+		if ((solid > offset || !scanning) && !delete){
+			return false;
+		}
+		return true;
+	}
+	public static void addSoild(int increase){
+		solid += increase;
+	}
+}
